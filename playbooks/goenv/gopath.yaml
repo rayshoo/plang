@@ -1,0 +1,17 @@
+- name: register .bashrc text
+  shell: cat {{ item['home'] }}/.bashrc
+  register: result
+  changed_when: false
+
+- name: add gopath if not exists
+  when: not result['stdout'] | regex_search('^[ ]*export[ ]*GOPATH=.*', multiline=True)
+  lineinfile:
+    dest: "{{ item['home'] }}/.bashrc"
+    line: export GOPATH={{ gopath }}
+
+- name: change gopath if already exists
+  when: result['stdout'] | regex_search('^[ ]*export[ ]*GOPATH=.*', multiline=True)
+  replace:
+    dest: "{{ item['home'] }}/.bashrc"
+    regexp: ^[ ]*export[ ]*GOPATH=.*
+    replace: export GOPATH={{ gopath }}

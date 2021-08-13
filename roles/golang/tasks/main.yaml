@@ -1,0 +1,31 @@
+---
+- name: Ensure Golang downloads directory exists
+  file:
+    path: "{{ playbook_dir }}/downloads/golang"
+    state: directory
+    owner: "{{ local['user'] }}"
+    group: "{{ local['user'] }}"
+    mode: 0755
+  
+- name: Download Golang
+  get_url:
+    url: https://golang.org/dl/go{{ version['golang'] }}.linux-amd64.tar.gz
+    dest: "{{ playbook_dir }}/downloads/golang"
+    owner: "{{ local['user'] }}"
+    group: "{{ local['user'] }}"
+    mode: 0644
+  register: result
+
+- name: Unarchive Golang archive
+  unarchive:
+    src: "{{ playbook_dir }}/downloads/golang/{{ result['dest'].split('/')[-1] }}"
+    dest: /usr/local
+    owner: "{{ local['user'] }}"
+    group: "{{ local['user'] }}"
+    mode: 0755
+  register: result
+
+- name: Add Golang path env
+  lineinfile:
+    dest: "{{ local['home'] }}/.bashrc"
+    line: export PATH=$PATH:/usr/local/go/bin

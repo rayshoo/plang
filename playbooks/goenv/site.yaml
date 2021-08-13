@@ -1,0 +1,39 @@
+---
+- hosts: localhost
+  gather_facts: no
+  become: yes
+  vars:
+    local:
+      user: "{{ lookup('env','USER') }}"
+      home: "{{ lookup('env','HOME') }}"
+    project_name: 
+    targets:
+    - { enable: yes, home: "{{ local['home'] }}" }
+    - { enable: yes, home: /root }
+    gopath: "{{ local['home'] }}/{{ project_name }}"
+  tasks:
+  - name: Add Golang path env
+    when: item['enable']
+    lineinfile:
+      dest: "{{ item['home'] }}/.bashrc"
+      line: export PATH=$PATH:/usr/local/go/bin
+    with_items: "{{ targets }}"
+
+  - name: Set Gopath
+    when: project_name is defined and not not project_name
+    block:
+    - when: item['enable']
+      include: gopath.yaml
+      with_items: "{{ targets }}"
+
+    - name: Ensure Gopath exists
+      file:
+        path: "{{ item }}"
+        owner: "{{ local['user'] }}"
+        group: "{{ local['user'] }}"
+        mode: 0755
+        state: directory
+      with_items:
+      - "{{ gopath }}/bin"
+      - "{{ gopath }}/pkg"
+      - "{{ gopath }}/src"
