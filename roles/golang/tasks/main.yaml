@@ -1,4 +1,4 @@
----
+--- 
 - name: Ensure Golang downloads directory exists
   file:
     path: "{{ playbook_dir }}/downloads/golang"
@@ -6,26 +6,44 @@
     owner: "{{ local['user'] }}"
     group: "{{ local['user'] }}"
     mode: 0755
+
+- name: Check Golang already exists
+  command: /usr/local/go/bin/go version
+  register: goversion
+  changed_when: false
+  failed_when: false
+
+- when: goversion['stdout'] is defined
+  set_fact:
+    installed_go_version: "{{ goversion['stdout'].split(' ')[2][2:] }}"
+
+- when: goversion['stdout'] is undefined or installed_go_version != version['golang'] | string
+  block:
+  - name: Remove already installed go
+    when: installed_go_version is defined
+    file:
+      path: /usr/local/go
+      state: absent
+    
+  - name: Download Golang
+    get_url:
+      url: https://golang.org/dl/go{{ version['golang'] }}.linux-amd64.tar.gz
+      dest: "{{ playbook_dir }}/downloads/golang"
+      owner: "{{ local['user'] }}"
+      group: "{{ local['user'] }}"
+      mode: 0644
+    register: result
   
-- name: Download Golang
-  get_url:
-    url: https://golang.org/dl/go{{ version['golang'] }}.linux-amd64.tar.gz
-    dest: "{{ playbook_dir }}/downloads/golang"
-    owner: "{{ local['user'] }}"
-    group: "{{ local['user'] }}"
-    mode: 0644
-  register: result
-
-- name: Unarchive Golang archive
-  unarchive:
-    src: "{{ playbook_dir }}/downloads/golang/{{ result['dest'].split('/')[-1] }}"
-    dest: /usr/local
-    owner: "{{ local['user'] }}"
-    group: "{{ local['user'] }}"
-    mode: 0755
-  register: result
-
-- name: Add Golang path env
-  lineinfile:
-    dest: "{{ local['home'] }}/.bashrc"
-    line: export PATH=$PATH:/usr/local/go/bin
+  - name: Unarchive Golang archive
+    unarchive:
+      src: "{{ playbook_dir }}/downloads/golang/{{ result['dest'].split('/')[-1] }}"
+      dest: /usr/local
+      owner: "{{ local['user'] }}"
+      group: "{{ local['user'] }}"
+      mode: 0755
+    register: result
+  
+  - name: Add Golang path env
+    lineinfile:
+      dest: "{{ local['home'] }}/.bashrc"
+      line: export PATH=$PATH:/usr/local/go/bin
