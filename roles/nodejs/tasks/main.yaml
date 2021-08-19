@@ -1,0 +1,44 @@
+--- 
+- name: Ensure nodejs downloads directory exists
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ local['user'] }}"
+    group: "{{ local['user'] }}"
+    mode: 0755
+  with_items:
+  - "{{ playbook_dir }}/downloads/nodejs"
+  - /usr/local/lib/nodejs
+
+- name: Check nodejs already installed
+  shell: /usr/local/lib/nodejs/node-v{{ version['nodejs'] }}-linux-x64/bin/node --version
+  register: node_version
+  changed_when: false
+  failed_when: false
+
+- when: node_version['stdout'] is defined
+  set_fact:
+    installed_node_version: "{{ node_version['stdout'][1:] }}"
+
+- when: node_version['stdout'] is undefined or installed_node_version != version['nodejs'] | string
+  block:
+  - name: Download nodejs
+    get_url:
+      url: https://nodejs.org/dist/v{{ version['nodejs'] }}/node-v{{ version['nodejs'] }}-linux-x64.tar.xz
+      dest: "{{ playbook_dir }}/downloads/nodejs"
+      owner: "{{ local['user'] }}"
+      group: "{{ local['user'] }}"
+      mode: 0644
+    register: result
+  
+  - name: Unarchive nodejs archive
+    unarchive:
+      src: "{{ playbook_dir }}/downloads/nodejs/{{ result['dest'].split('/')[-1] }}"
+      dest: /usr/local/lib/nodejs
+      owner: "{{ local['user'] }}"
+      group: "{{ local['user'] }}"
+      mode: 0755
+
+- name: Add nodejs path env
+  set_fact:
+    env_paths: "{{ env_paths | default('') + 'export PATH=/usr/local/lib/nodejs/node-v' + version['nodejs'] + '-linux-x64/bin:$PATH\n' }}"

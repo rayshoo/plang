@@ -7,7 +7,7 @@
     group: "{{ local['user'] }}"
     mode: 0755
 
-- name: Check Golang already exists
+- name: Check Golang already installed
   command: /usr/local/go/bin/go version
   register: goversion
   changed_when: false
@@ -43,7 +43,6 @@
       mode: 0755
     register: result
   
-  - name: Add Golang path env
-    lineinfile:
-      dest: "{{ local['home'] }}/.bashrc"
-      line: export PATH=$PATH:/usr/local/go/bin
+- name: Add Golang path env
+  set_fact:
+    env_paths: "{{ env_paths | default('') + 'export PATH=$PATH:/usr/local/go/bin\n' }}"

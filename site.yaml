@@ -5,5 +5,27 @@
     local:
       user: "{{ lookup('env','USER') }}"
       home: "{{ lookup('env','HOME') }}"
+    targets:
+    - { enable: yes, home: "{{ local['home'] }}" }
+    - { enable: yes, home: /root }
+    version:
+      golang: 1.16.7
+      nodejs: 14.17.5
   roles:
   - golang
+  - nodejs
+  tasks:
+  - name: configure bashrc
+    when: item['enable']
+    blockinfile:
+      dest: "{{ item['home'] }}/.bashrc"
+      block: "{{ env_paths }}"
+      backup: yes
+      marker: "# {mark} env_paths managed by rayshoo/env"
+    with_items: "{{ targets }}"
+    register: result
+
+  - name: Alert
+    when: result['changed']
+    debug:
+      msg: If your host is localhost, type 'source ~/.bashrc' in your shell
