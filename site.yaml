@@ -28,4 +28,4 @@
   - name: Alert
     when: result['changed']
     debug:
-      msg: If your host is localhost, type 'source ~/.bashrc' in your shell
+      msg: If your ansible host is localhost, type 'source ~/.bashrc' in your shell
