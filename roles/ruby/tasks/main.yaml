@@ -1,0 +1,34 @@
+---
+- name: Ensure ruby downloads directory exists
+  file:
+    path: "{{ playbook_dir }}/downloads/ruby"
+    state: directory
+    owner: "{{ local['user'] }}"
+    group: "{{ local['user'] }}"
+    mode: 0755
+
+- name: Install gcc, make(Debian)
+  when: ansible_os_family == "Debian"
+  apt:
+    update_cache: yes
+    force: yes
+    name:
+    - gcc{{ '=' + version['gcc'] if version['gcc'] is defined and version['gcc'] != 'latest' else '' }}
+    - make{{ '=' + version['make'] if version['make'] is defined and version['make'] != 'latest' else '' }}
+    state: present
+
+- name: Install gcc, make(RedHat)
+  when: ansible_os_family == "RedHat"
+  yum:
+    update_cache: yes
+    allow_downgrade: yes
+    name:
+    - gcc{{ '-' + version['gcc'] if version['gcc'] is defined and version['gcc'] != 'latest' else '' }}
+    - make{{ '-' + version['make'] if version['make'] is defined and version['make'] != 'latest' else '' }}
+    state: present
+  
+- name: Git clone rbenv v{{version['rbenv']}}
+  git:
+    repo: https://github.com/rbenv/rbenv
+    dest: "{{ playbook_dir }}/downloads/ruby"
+    version: v{{ version['rbenv'] }}

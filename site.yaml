@@ -11,6 +11,9 @@
     version:
       golang: 1.16.7
       nodejs: 14.17.5
+      ruby: 3.0.2
+      rbenv: 1.1.2
+      git: latest
   roles:
   - golang
   - nodejs
