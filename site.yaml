@@ -13,6 +13,7 @@
       nodejs: 14.17.5
       ruby: 3.0.2
       rbenv: 1.1.2
+      ruby_build: 20210804
       git: latest
   roles:
   - golang
@@ -22,13 +23,13 @@
     when: item['enable']
     blockinfile:
       dest: "{{ item['home'] }}/.bashrc"
-      block: "{{ env_paths }}"
+      block: "{{ bashrc_config }}"
       backup: yes
-      marker: "# {mark} env_paths managed by rayshoo/env"
+      marker: "# {mark} bashrc_config managed by rayshoo/env"
     with_items: "{{ targets }}"
     register: result
 
   - name: Alert
     when: result['changed']
     debug:
-      msg: If your ansible host is localhost, type 'source ~/.bashrc' in your shell
+      msg: If your ansible hosts include localhost, type 'source ~/.bashrc' in your shell

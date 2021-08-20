@@ -45,4 +45,4 @@
   
 - name: Add Golang path env
   set_fact:
-    env_paths: "{{ env_paths | default('') + 'export PATH=$PATH:/usr/local/go/bin\n' }}"
+    bashrc_config: "{{ bashrc_config | default('') + 'export PATH=$PATH:/usr/local/go/bin\n' }}"

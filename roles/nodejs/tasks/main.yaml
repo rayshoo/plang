@@ -41,4 +41,4 @@
 
 - name: Add nodejs path env
   set_fact:
-    env_paths: "{{ env_paths | default('') + 'export PATH=/usr/local/lib/nodejs/node-v' + version['nodejs'] + '-linux-x64/bin:$PATH\n' }}"
+    bashrc_config: "{{ bashrc_config | default('') + 'export PATH=/usr/local/lib/nodejs/node-v' + version['nodejs'] + '-linux-x64/bin:$PATH\n' }}"

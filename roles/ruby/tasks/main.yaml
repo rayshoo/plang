@@ -7,28 +7,98 @@
     group: "{{ local['user'] }}"
     mode: 0755
 
-- name: Install gcc, make(Debian)
-  when: ansible_os_family == "Debian"
-  apt:
-    update_cache: yes
-    force: yes
-    name:
-    - gcc{{ '=' + version['gcc'] if version['gcc'] is defined and version['gcc'] != 'latest' else '' }}
-    - make{{ '=' + version['make'] if version['make'] is defined and version['make'] != 'latest' else '' }}
-    state: present
+- name: Check ruby already installed
+  command: "{{ local['home'] }}/.rbenv/shims/ruby"
+  register: ruby_version
+  changed_when: false
+  failed_when: false
 
-- name: Install gcc, make(RedHat)
-  when: ansible_os_family == "RedHat"
-  yum:
-    update_cache: yes
-    allow_downgrade: yes
-    name:
-    - gcc{{ '-' + version['gcc'] if version['gcc'] is defined and version['gcc'] != 'latest' else '' }}
-    - make{{ '-' + version['make'] if version['make'] is defined and version['make'] != 'latest' else '' }}
-    state: present
-  
-- name: Git clone rbenv v{{version['rbenv']}}
-  git:
-    repo: https://github.com/rbenv/rbenv
-    dest: "{{ playbook_dir }}/downloads/ruby"
-    version: v{{ version['rbenv'] }}
+- when: ruby_version['stdout'] is undefined or not version['ruby'] in ruby_version['stdout'].split(' ')[1]
+  block:
+  - name: Check rbenv already installed
+    command: "{{ local['home'] }}/.rbenv/bin/rbenv --version"
+    register: rbenv_version
+    changed_when: false
+    failed_when: false
+
+  - when: rbenv_version['stdout'] is undefined or not version['rbenv'] in rbenv_version['stdout'].split('-')[0].split(' ')[1]
+    block:
+    - name: Install gcc, make(Debian)
+      when: ansible_os_family == "Debian"
+      apt:
+        update_cache: yes
+        force: yes
+        name:
+        - gcc{{ '=' + version['gcc'] if version['gcc'] is defined and version['gcc'] != 'latest' else '' }}
+        - make{{ '=' + version['make'] if version['make'] is defined and version['make'] != 'latest' else '' }}
+        state: present
+    
+    - name: Install gcc, make(RedHat)
+      when: ansible_os_family == "RedHat"
+      yum:
+        update_cache: yes
+        allow_downgrade: yes
+        name:
+        - gcc{{ '-' + version['gcc'] if version['gcc'] is defined and version['gcc'] != 'latest' else '' }}
+        - make{{ '-' + version['make'] if version['make'] is defined and version['make'] != 'latest' else '' }}
+        state: present
+
+    - name: remove already installed rbenv
+      file:
+        path: "{{ local['home'] }}/.rbenv"
+        state: absent
+
+    - name: Git clone rbenv 
+      become: no
+      git:
+        repo: https://github.com/rbenv/rbenv
+        dest: "{{ local['home'] }}/.rbenv"
+        version: v{{ version['rbenv'] }}
+    
+    - name: try to compile dynamic bash extension to speed up rbenv
+      block:
+      - become: no
+        command: "{{ local['home'] }}/.rbenv/src/configure"
+        changed_when: false
+      
+      - become: no
+        make:
+          chdir: "{{ local['home'] }}/.rbenv/src"
+        changed_when: result['stdout'] != ''
+        register: result
+
+  - name: Create rbenv plugins,caching directory
+    file:
+      path: "{{ item }}"
+      owner: "{{ local['user'] }}"
+      group: "{{ local['user'] }}"
+      state: directory
+    with_items:
+    - "{{ local['home'] }}/.rbenv/plugins"
+    - "{{ local['home'] }}/.rbenv/cache"
+
+  - name: Install rbenv ruby-build plugins
+    become: no
+    git:
+      repo: https://github.com/rbenv/ruby-build.git
+      dest: "{{ local['home'] }}/.rbenv/plugins/ruby-build"
+      version: v{{ version['ruby_build'] }}
+
+- name: Check ruby-{{ version['ruby'] }} in rbenv list
+  command: "{{ local['home'] }}/.rbenv/bin/rbenv versions"
+  register: rbenv_list
+  changed_when: false
+  failed_when: false
+
+- name: Add rbenv path, auto init command
+  set_fact:
+    bashrc_config: "{{ bashrc_config | default('') + item }}"
+  with_items:
+  - export PATH=$PATH:{{ local['home'] }}/.rbenv/bin\n
+  - eval "$(rbenv init -)"
+
+- when:
+  - rbenv_list['stdout'] is defined
+  - not version['ruby'] in rbenv_list['stdout']
+  include_role:
+    name: ruby/roles/install
