@@ -18,6 +18,7 @@
   roles:
   - golang
   - nodejs
+  - ruby
   tasks:
   - name: configure bashrc
     when: item['enable']

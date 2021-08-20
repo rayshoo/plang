@@ -8,12 +8,12 @@
     mode: 0755
 
 - name: Check ruby already installed
-  command: "{{ local['home'] }}/.rbenv/shims/ruby"
+  command: "{{ local['home'] }}/.rbenv/shims/ruby --version"
   register: ruby_version
   changed_when: false
   failed_when: false
 
-- when: ruby_version['stdout'] is undefined or not version['ruby'] in ruby_version['stdout'].split(' ')[1]
+- when: ruby_version['stdout'] is undefined or ruby_version['stdout'] == "" or not version['ruby'] in ruby_version['stdout'].split(' ')[1]
   block:
   - name: Check rbenv already installed
     command: "{{ local['home'] }}/.rbenv/bin/rbenv --version"
@@ -85,6 +85,7 @@
       version: v{{ version['ruby_build'] }}
 
 - name: Check ruby-{{ version['ruby'] }} in rbenv list
+  become: no
   command: "{{ local['home'] }}/.rbenv/bin/rbenv versions"
   register: rbenv_list
   changed_when: false
@@ -94,11 +95,38 @@
   set_fact:
     bashrc_config: "{{ bashrc_config | default('') + item }}"
   with_items:
-  - export PATH=$PATH:{{ local['home'] }}/.rbenv/bin\n
+  - "{{ 'export PATH=$PATH:' + local['home'] + '/.rbenv/bin\n' }}"
   - eval "$(rbenv init -)"
 
 - when:
   - rbenv_list['stdout'] is defined
   - not version['ruby'] in rbenv_list['stdout']
-  include_role:
-    name: ruby/roles/install
+  block:
+  - name: Install ruby {{ version['ruby'] }} version
+    become: no
+    command: "{{ local['home'] }}/.rbenv/bin/rbenv install {{ version['ruby'] }}"
+    register: result
+  rescue:
+  - name: get dependencies
+    when: "'missing dependencies' in item"
+    set_fact:
+      dependencies: "{{ item.split('`')[1].split('-y ')[1].split(' ') }}"
+    with_items: "{{ result['stderr_lines'] }}"
+  - name: Install dependencies(Debian)
+    when: ansible_os_family == "Debian"
+    apt:
+      name: "{{ dependencies }}"
+      state: latest
+  - name: Install dependencies(RedHat)
+    when: ansible_os_family == "RedHat"
+    yum:
+      name: "{{ dependencies }}"
+      state: latest
+  - name: Install ruby {{ version['ruby'] }} version(retry)
+    become: no
+    command: "{{ local['home'] }}/.rbenv/bin/rbenv install {{ version['ruby'] }}"
+
+- name: Points to ruby {{ version['ruby'] }}
+  when: ruby_version['stdout'] is undefined or ruby_version['stdout'] == "" or not version['ruby'] in ruby_version['stdout'].split(' ')[1]
+  become: no
+  command: "{{ local['home'] }}/.rbenv/bin/rbenv local {{ version['ruby'] }}"

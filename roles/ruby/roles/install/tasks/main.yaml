@@ -1,8 +1,0 @@
----
-- block:
-  - name: Install ruby {{ version['ruby'] }} version
-    shell: rbenv install {{ version['ruby'] }}
-    register: result
-  rescue:
-  - debug:
-      var: result
