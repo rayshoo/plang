@@ -1,0 +1,37 @@
+---
+- when: count | default(0) | int != 3
+  block:
+  - name: Build ruby {{ version['ruby'] }} version
+    become: no
+    command: >
+      {{ 'RUBY_CONFIGURE_OPTS=' + ruby_configure_opts if ruby_configure_opts is defined else '' }}
+      {{ local['home'] }}/.rbenv/bin/rbenv install {{ version['ruby'] }}
+    register: result
+  rescue:
+  - name: counting {{ count | default(0) }} to {{ count | default(0) | int + 1 }}
+    set_fact:
+      count: "{{ count | default(0) | int + 1 }}"
+  - name: get dependencies
+    when: "'missing dependencies' in item"
+    set_fact:
+      dependencies: "{{ item.split('`')[1].split('-y ')[1].split(' ') }}"
+    with_items: "{{ result['stderr_lines'] }}"
+  - when: dependencies is defined
+    block:
+    - name: Install dependencies(Debian)
+      when: ansible_os_family == "Debian"
+      apt:
+        name: "{{ dependencies }}"
+        state: latest
+    - name: Install dependencies(RedHat)
+      when: ansible_os_family == "RedHat"
+      yum:
+        name: "{{ dependencies }}"
+        state: latest
+  - when: dependencies is undefined
+    set_fact:
+      ruby_configure_opts: "--disable-install-doc "
+  - name: Retry build ruby {{ version['ruby'] }}
+    include_role:
+      name: ruby/build
+      allow_duplicates: yes

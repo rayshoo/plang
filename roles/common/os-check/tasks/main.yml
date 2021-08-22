@@ -1,0 +1,30 @@
+---
+- name: Get os_version from /etc/os-release
+  raw: grep '^VERSION_ID=' /etc/os-release | sed s'/VERSION_ID=//' |  sed 's/\"//g'
+  register: os_version
+  changed_when: false
+
+- set_fact:
+    os_version: "{{ os_version['stdout'] | trim }}"
+
+- when: ansible_os_family is not defined
+  block:
+  - name: Get distro name from /etc/os-release
+    raw: grep '^NAME=' /etc/os-release | sed s'/NAME=//'
+    register: distro
+    changed_when: false
+
+  - name: Set fact ansible_os_family var to Debian
+    when: "'Debian' in distro['stdout']"
+    set_fact:
+      ansible_os_family: Debian
+
+  - name: Set fact ansible_os_family var to Debian
+    when: "'Ubuntu' in distro['stdout']"
+    set_fact:
+      ansible_os_family: Debian
+
+  - name: Set fact ansible_os_family var to RedHat
+    when: "'CentOS' in distro['stdout']"
+    set_fact:
+      ansible_os_family: RedHat

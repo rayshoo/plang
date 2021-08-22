@@ -1,0 +1,15 @@
+---
+- include_role:
+    name: ruby/rbenv
+
+- name: Build ruby {{ version['ruby'] }}
+  when:
+  - rbenv_list['stdout'] is defined
+  - not version['ruby'] in rbenv_list['stdout']
+  include_role:
+    name: ruby/build
+
+- name: Points to ruby {{ version['ruby'] }}
+  when: ruby_version['stdout'] is undefined or ruby_version['stdout'] == "" or not version['ruby'] in ruby_version['stdout'].split(' ')[1]
+  become: no
+  command: "{{ local['home'] }}/.rbenv/bin/rbenv global {{ version['ruby'] }}"
