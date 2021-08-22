@@ -12,6 +12,7 @@
       golang: 1.16.7
       nodejs: 14.17.5
       ruby: 3.0.2
+
       rbenv: 1.1.2
       ruby_build: 20210804
       git: latest
@@ -26,7 +27,7 @@
       dest: "{{ item['home'] }}/.bashrc"
       block: "{{ bashrc_config }}"
       backup: yes
-      marker: "# {mark} bashrc_config managed by rayshoo/env"
+      marker: "# {mark} bashrc_config managed by rayshoo/plang"
     with_items: "{{ targets }}"
     register: result
 
