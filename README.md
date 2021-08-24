@@ -31,3 +31,6 @@ vars:
 ```sh
 $ ansible-playbook site.yaml
 ```
+
+## Referenced
+### [rbenv/rbenv](https://github.com/rbenv/rbenv)
