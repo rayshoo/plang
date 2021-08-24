@@ -1,0 +1,16 @@
+---
+- name: Install vim(Debian)
+  when: ansible_os_family == "Debian"
+  apt:
+    update_cache: yes
+    force: yes
+    name: vim{{ '=' + version['vim'] if version['vim'] != 'latest' else '' }}
+    state: "{{ 'present' if version['vim'] != 'latest' else 'latest' }}"
+
+- name: Install vim(RedHat)
+  when: ansible_os_family == "RedHat"
+  yum:
+    update_cache: yes
+    allow_downgrade: yes
+    name: vim{{ '-' + version['vim'] if version['vim'] != 'latest' else '' }}
+    state: "{{ 'present' if version['vim'] != 'latest' else 'latest' }}"
