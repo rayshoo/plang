@@ -1,0 +1,7 @@
+---
+local:
+  user: "{{ lookup('env','USER') }}"
+  home: "{{ lookup('env','HOME') }}"
+targets:
+- { enable: yes, user: "{{ local['user'] }}", home: "{{ local['home'] }}" }
+- { enable: yes, user: root, home: /root }

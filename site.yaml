@@ -1,27 +1,18 @@
 ---
 - hosts: localhost
   become: yes
-  vars:
-    local:
-      user: "{{ lookup('env','USER') }}"
-      home: "{{ lookup('env','HOME') }}"
-    targets:
-    - { enable: yes, user: "{{ local['user'] }}", home: "{{ local['home'] }}" }
-    - { enable: yes, user: root, home: /root }
-    version:
-      golang: 1.16.7
-      nodejs: 14.17.5
-      ruby: 3.0.2
-
-      rbenv: 1.1.2
-      ruby_build: 20210804
-      git: latest
-      vim: latest
+  vars_files:
+  - vars/main.yaml
+  - vars/version.yaml
   roles:
   - golang
   - nodejs
   - ruby
   tasks:
+  - name: configure vimrc
+    include_role:
+      name: custom/vim
+
   - name: configure bashrc
     when: item['enable']
     blockinfile:

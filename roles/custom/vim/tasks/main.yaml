@@ -16,11 +16,6 @@
   blockinfile:
     dest: "{{ item['home'] }}/.vimrc"
     block: |
-      inoremap ` ``<left>
-      inoremap " ""<left>
-      inoremap ' ''<left>
-      inoremap ( ()<left>
-      inoremap [ []<left>
       inoremap { {}<left>
       inoremap {<CR> {<CR>}<ESC>O
     marker: "\" {mark} vimrc_config managed by rayshoo/plang"
