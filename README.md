@@ -13,10 +13,10 @@ roles:
   - ruby
 ```
 
-3. Type the version of programming languages you want to install in [site.yaml](site.yaml)
+3. Type the version of programming languages you want to install in [vars/version.yaml](vars/version.yaml)
 
 ```yaml
-# site.yaml
+# vars/version.yaml
 ---
 vars:
   version:
