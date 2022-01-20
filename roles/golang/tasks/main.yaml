@@ -13,11 +13,11 @@
   changed_when: false
   failed_when: false
 
-- when: goversion['stdout'] is defined
+- when: goversion['stdout'] is defined and not not goversion['stdout']
   set_fact:
     installed_go_version: "{{ goversion['stdout'].split(' ')[2][2:] }}"
 
-- when: goversion['stdout'] is undefined or installed_go_version != version['golang'] | string
+- when: installed_go_version is undefined or installed_go_version != version['golang'] | string
   block:
   - name: Remove already installed go
     when: installed_go_version is defined
