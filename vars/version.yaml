@@ -1,6 +1,6 @@
 ---
 version:
-  golang: 1.16.7
+  golang: 1.17.6
   nodejs: 14.17.5
   ruby: 3.0.2
 
