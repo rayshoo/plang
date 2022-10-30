@@ -21,7 +21,7 @@
     changed_when: false
     failed_when: false
 
-  - when: rbenv_version['stdout'] is undefined or not version['rbenv'] in rbenv_version['stdout'].split('-')[0].split(' ')[1]
+  - when: rbenv_version['stdout'] is undefined or rbenv_version['stdout'] == "" or not version['rbenv'] in rbenv_version['stdout'].split('-')[0].split(' ')[1]
     block:
     - name: Install gcc, make(Debian)
       when: ansible_os_family == "Debian"
