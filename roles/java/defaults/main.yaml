@@ -1,6 +1,7 @@
 ---
 version:
   java: 11.0.2
+  gradle: 6.8.3
 
 openjdk:
 - version: '20.0.1'

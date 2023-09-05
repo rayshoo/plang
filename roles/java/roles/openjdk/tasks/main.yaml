@@ -1,0 +1,39 @@
+--- 
+- name: Ensure java/openjdk downloads directory exists
+  file:
+    path: "{{ playbook_dir }}/downloads/java/openjdk"
+    state: directory
+    owner: "{{ local['user'] }}"
+    group: "{{ local['user'] }}"
+    mode: 0755
+
+- name: Get openjdk download link
+  when: version['java'] | string == item['version']
+  set_fact:
+    openjdk_link: "{{ item['link'] }}"
+  with_items: "{{ openjdk }}"
+
+- name: Download openjdk
+  get_url:
+    url: "{{ openjdk_link }}"
+    dest: "{{ playbook_dir }}/downloads/java/openjdk"
+    owner: "{{ local['user'] }}"
+    group: "{{ local['user'] }}"
+    mode: 0644
+  register: result
+
+- name: Unarchive openjdk archive
+  unarchive:
+    src: "{{ playbook_dir }}/downloads/java/openjdk/{{ result['dest'].split('/')[-1] }}"
+    dest: "{{ playbook_dir }}/downloads/java/openjdk"
+    owner: "{{ local['user'] }}"
+    group: "{{ local['user'] }}"
+    mode: 0755
+  register: result
+
+- set_fact:
+    openjdk_path: export PATH=$PATH:{{ playbook_dir }}/downloads/java/openjdk/jdk-{{ version['java'] }}/bin
+
+- name: Add openjdk path env
+  set_fact:
+    bashrc_config: "{{ bashrc_config | default('') + openjdk_path + '\n' }}"

@@ -1,0 +1,33 @@
+--- 
+- name: Ensure java/gradle downloads directory exists
+  file:
+    path: "{{ playbook_dir }}/downloads/java/gradle"
+    state: directory
+    owner: "{{ local['user'] }}"
+    group: "{{ local['user'] }}"
+    mode: 0755
+
+- name: Download gradle
+  get_url:
+    url: https://services.gradle.org/distributions/gradle-{{ version['gradle'] }}-bin.zip
+    dest: "{{ playbook_dir }}/downloads/java/gradle"
+    owner: "{{ local['user'] }}"
+    group: "{{ local['user'] }}"
+    mode: 0644
+  register: result
+
+- name: Unarchive gradle archive
+  unarchive:
+    src: "{{ playbook_dir }}/downloads/java/gradle/{{ result['dest'].split('/')[-1] }}"
+    dest: "{{ playbook_dir }}/downloads/java/gradle/"
+    owner: "{{ local['user'] }}"
+    group: "{{ local['user'] }}"
+    mode: 0755
+  register: result
+
+- set_fact:
+    gradle_path: export PATH=$PATH:{{ playbook_dir }}/downloads/java/gradle/gradle-{{ version['gradle'] }}/bin
+
+- name: Add gradle path env
+  set_fact:
+    bashrc_config: "{{ bashrc_config | default('') + gradle_path + '\n' }}"
