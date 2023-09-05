@@ -8,6 +8,7 @@
   - golang
   - nodejs
   - ruby
+  - java
   tasks:
   - name: configure vimrc
     include_role:

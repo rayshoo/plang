@@ -3,6 +3,7 @@ version:
   golang: 1.19.2
   nodejs: 18.12.0
   ruby: 3.0.2
+  java: 11.0.2
 
   rbenv: 1.2.0
   ruby_build: 20210804

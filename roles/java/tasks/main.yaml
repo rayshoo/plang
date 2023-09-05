@@ -1,0 +1,39 @@
+--- 
+- name: Ensure java downloads directory exists
+  file:
+    path: "{{ playbook_dir }}/downloads/java"
+    state: directory
+    owner: "{{ local['user'] }}"
+    group: "{{ local['user'] }}"
+    mode: 0755
+
+- name: Get java download link
+  when: version['java'] | string == item['version']
+  set_fact:
+    openjdk_link: "{{ item['link'] }}"
+  with_items: "{{ openjdk }}"
+
+- name: Download Java
+  get_url:
+    url: "{{ openjdk_link }}"
+    dest: "{{ playbook_dir }}/downloads/java"
+    owner: "{{ local['user'] }}"
+    group: "{{ local['user'] }}"
+    mode: 0644
+  register: result
+
+- name: Unarchive Java archive
+  unarchive:
+    src: "{{ playbook_dir }}/downloads/java/{{ result['dest'].split('/')[-1] }}"
+    dest: "{{ playbook_dir }}/downloads/java/"
+    owner: "{{ local['user'] }}"
+    group: "{{ local['user'] }}"
+    mode: 0755
+  register: result
+
+- set_fact:
+    java_path: export PATH=$PATH:{{ playbook_dir }}/downloads/java/jdk-{{ version['java'] }}/bin
+
+- name: Add Java path env
+  set_fact:
+    bashrc_config: "{{ bashrc_config | default('') + java_path + '\n' }}"
